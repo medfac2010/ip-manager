@@ -43,8 +43,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
-    return user;
+    await db.insert(users).values(insertUser);
+    const [user] = await db.select().from(users).where(eq(users.username, insertUser.username));
+    return user!;
   }
 
   async getUsers(): Promise<User[]> {
@@ -52,8 +53,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: number, updates: Partial<User>): Promise<User> {
-    const [user] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
-    return user;
+    await db.update(users).set(updates).where(eq(users.id, id));
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user!;
   }
 
   async getEstablishments(): Promise<Establishment[]> {
@@ -66,8 +68,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createEstablishment(establishment: InsertEstablishment): Promise<Establishment> {
-    const [newEst] = await db.insert(establishments).values(establishment).returning();
-    return newEst;
+    await db.insert(establishments).values(establishment);
+    const [newEst] = await db.select().from(establishments).where(eq(establishments.name, establishment.name));
+    return newEst!;
   }
 
   async getPcs(establishmentId?: number): Promise<PC[]> {
@@ -83,13 +86,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPc(pc: InsertPC): Promise<PC> {
-    const [newPc] = await db.insert(pcs).values(pc).returning();
-    return newPc;
+    await db.insert(pcs).values(pc);
+    const [newPc] = await db.select().from(pcs).where(eq(pcs.ipAddress, pc.ipAddress));
+    return newPc!;
   }
 
   async updatePc(id: number, updates: Partial<InsertPC>): Promise<PC> {
-    const [updatedPc] = await db.update(pcs).set(updates).where(eq(pcs.id, id)).returning();
-    return updatedPc;
+    await db.update(pcs).set(updates).where(eq(pcs.id, id));
+    const [updatedPc] = await db.select().from(pcs).where(eq(pcs.id, id));
+    return updatedPc!;
   }
 
   async deletePc(id: number): Promise<void> {

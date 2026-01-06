@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { mysqlTable, text, varchar, int, boolean, timestamp, json } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -6,28 +6,28 @@ import { z } from "zod";
 export const roles = ["super_admin", "admin", "user"] as const;
 export const pcTypes = ["Server", "Mini Server", "Terminal"] as const;
 
-export const establishments = pgTable("establishments", {
-  id: serial("id").primaryKey(),
+export const establishments = mysqlTable("establishments", {
+  id: int("id").primaryKey().autoincrement(),
   name: text("name").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
+export const users = mysqlTable("users", {
+  id: int("id").primaryKey().autoincrement(),
+  username: varchar("username", { length: 255 }).notNull().unique(),
   password: text("password").notNull(),
   role: text("role", { enum: roles }).notNull().default("user"),
-  establishmentId: integer("establishment_id").references(() => establishments.id),
+  establishmentId: int("establishment_id").references(() => establishments.id),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const pcs = pgTable("pcs", {
-  id: serial("id").primaryKey(),
-  establishmentId: integer("establishment_id").references(() => establishments.id).notNull(),
+export const pcs = mysqlTable("pcs", {
+  id: int("id").primaryKey().autoincrement(),
+  establishmentId: int("establishment_id").references(() => establishments.id).notNull(),
   type: text("type", { enum: pcTypes }).notNull(),
-  ipAddress: text("ip_address").notNull(),
+  ipAddress: varchar("ip_address", { length: 45 }).notNull(),
   isIpFiltered: boolean("is_ip_filtered").default(false),
-  macAddress: text("mac_address"),
+  macAddress: varchar("mac_address", { length: 17 }),
   officeName: text("office_name"),
   usersInfo: text("users_info"), // Storing as formatted text for simplicity
   installedApps: text("installed_apps"),
