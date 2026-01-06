@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { api } from "@shared/routes";
+import { api, type User } from "@shared/routes";
 import { z } from "zod";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
@@ -102,7 +102,7 @@ export async function registerRoutes(
   app.post(api.auth.changePassword.path, requireAuth, async (req, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
-      const user = await storage.getUser(req.user!.id);
+      const user = await storage.getUser((req.user as any).id);
       const isValid = await comparePasswords(currentPassword, user!.password);
       if (!isValid) return res.status(400).json({ message: "Incorrect current password" });
       
@@ -144,7 +144,49 @@ export async function registerRoutes(
     if (req.user!.role === 'super_admin') {
       res.json(users);
     } else {
-      res.json(users.filter(u => u.establishmentId === req.user!.establishmentId));
+      res.json(users.filter(u => u.establishmentId === (req.user as any).establishmentId));
+    }
+  });
+
+  app.put(api.users.update.path, requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const existing = await storage.getUser(id);
+      if (!existing) return res.status(404).json({ message: "User not found" });
+      
+      if ((req.user as any).role !== 'super_admin' && existing.establishmentId !== (req.user as any).establishmentId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const updates = { ...req.body };
+      delete updates.id; // Ensure we don't try to update the ID
+      
+      if (updates.password) {
+        updates.password = await hashPassword(updates.password);
+      }
+
+      const updated = await storage.updateUser(id, updates);
+      res.json(updated);
+    } catch (err: any) {
+      res.status(400).json({ message: err.message || "Failed to update user" });
+    }
+  });
+
+  app.delete(api.users.delete.path, requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const existing = await storage.getUser(id);
+      if (!existing) return res.status(404).json({ message: "User not found" });
+      
+      // Permission check: super_admin can delete anyone. admin can only delete users in their establishment.
+      if ((req.user as any).role !== 'super_admin' && existing.establishmentId !== (req.user as any).establishmentId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      await storage.deleteUser(id);
+      res.status(204).end();
+    } catch (err: any) {
+      res.status(400).json({ message: err.message || "Failed to delete user" });
     }
   });
 
@@ -156,8 +198,41 @@ export async function registerRoutes(
   });
 
   app.post(api.establishments.create.path, requireSuperAdmin, async (req, res) => {
-    const data = await storage.createEstablishment(req.body);
-    res.status(201).json(data);
+    try {
+      const data = await storage.createEstablishment(req.body);
+      res.status(201).json(data);
+    } catch (err: any) {
+      res.status(400).json({ message: err.message || "Failed to create establishment" });
+    }
+  });
+
+  app.put(api.establishments.update.path, requireSuperAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const existing = await storage.getEstablishment(id);
+      if (!existing) return res.status(404).json({ message: "Establishment not found" });
+      
+      const updated = await storage.updateEstablishment(id, req.body);
+      res.json(updated);
+    } catch (err: any) {
+      res.status(400).json({ message: err.message || "Failed to update establishment" });
+    }
+  });
+
+  app.delete(api.establishments.delete.path, requireSuperAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      console.log(`Attempting to delete establishment ${id}`);
+      const existing = await storage.getEstablishment(id);
+      if (!existing) return res.status(404).json({ message: "Establishment not found" });
+      
+      await storage.deleteEstablishment(id);
+      console.log(`Establishment ${id} deleted successfully`);
+      res.status(204).end();
+    } catch (err: any) {
+      console.error(`Error deleting establishment:`, err);
+      res.status(400).json({ message: err.message || "Failed to delete establishment (it may have users or computers linked)" });
+    }
   });
 
   // --- PCs ---
@@ -169,7 +244,7 @@ export async function registerRoutes(
     // "User ... can change password". Doesn't explicitly say user can view PCs.
     // But "Users can Export data to Excel" -> implies they can see data.
     
-    let establishmentId = req.user!.establishmentId;
+    let establishmentId = (req.user as any).establishmentId;
     if (req.user!.role === 'super_admin') {
        // If query param provided, use it
        if (req.query.establishmentId) {
@@ -186,8 +261,8 @@ export async function registerRoutes(
   app.post(api.pcs.create.path, requireAdmin, async (req, res) => {
     // Enforce establishment ID for non-super-admins
     let pcData = req.body;
-    if (req.user!.role !== 'super_admin') {
-      pcData = { ...pcData, establishmentId: req.user!.establishmentId! };
+    if ((req.user as any).role !== 'super_admin') {
+      pcData = { ...pcData, establishmentId: (req.user as any).establishmentId! };
     }
     const pc = await storage.createPc(pcData);
     res.status(201).json(pc);
@@ -227,7 +302,7 @@ export async function registerRoutes(
     if (req.user!.role === 'super_admin') {
       res.json(stats);
     } else {
-      res.json(stats.filter(s => s.establishmentId === req.user!.establishmentId));
+      res.json(stats.filter(s => s.establishmentId === (req.user as any).establishmentId));
     }
   });
 

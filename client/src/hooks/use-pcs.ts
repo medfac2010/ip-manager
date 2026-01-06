@@ -28,7 +28,10 @@ export function usePCs(establishmentId?: number) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to create PC");
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ message: res.statusText || "Failed to create PC" }));
+        throw new Error(error.message);
+      }
       return api.pcs.create.responses[201].parse(await res.json());
     },
     onSuccess: () => {
@@ -57,7 +60,10 @@ export function usePCs(establishmentId?: number) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
       });
-      if (!res.ok) throw new Error("Failed to update PC");
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ message: res.statusText || "Failed to update PC" }));
+        throw new Error(error.message);
+      }
       return api.pcs.update.responses[200].parse(await res.json());
     },
     onSuccess: () => {
@@ -80,17 +86,23 @@ export function usePCs(establishmentId?: number) {
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const url = buildUrl(api.pcs.delete.path, { id });
+      console.log(`Deleting PC ${id}...`);
       const res = await fetch(url, {
         method: api.pcs.delete.method,
       });
-      if (!res.ok) throw new Error("Failed to delete PC");
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ message: res.statusText || "Failed to delete PC" }));
+        console.error("Delete PC failed:", error);
+        throw new Error(error.message);
+      }
+      console.log("Delete PC successful");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.pcs.list.path] });
       queryClient.invalidateQueries({ queryKey: [api.stats.get.path] });
       toast({
-        title: "Deleted",
-        description: "PC removed successfully",
+        title: "Succès",
+        description: "PC supprimé avec succès",
       });
     },
     onError: (error: Error) => {

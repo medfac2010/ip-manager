@@ -71,6 +71,22 @@ export const api = {
         201: z.custom<typeof establishments.$inferSelect>(),
       },
     },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/establishments/:id',
+      input: insertEstablishmentSchema.partial(),
+      responses: {
+        200: z.custom<typeof establishments.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/establishments/:id',
+      responses: {
+        204: z.void(),
+      },
+    },
   },
   users: {
     create: {
@@ -87,6 +103,22 @@ export const api = {
       path: '/api/users',
       responses: {
         200: z.array(z.custom<typeof users.$inferSelect>()),
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/users/:id',
+      input: insertUserSchema.partial(),
+      responses: {
+        200: z.custom<typeof users.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/users/:id',
+      responses: {
+        204: z.void(),
       },
     },
   },

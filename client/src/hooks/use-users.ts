@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, type InsertUser } from "@shared/routes";
+import { api, buildUrl, type InsertUser, type UpdateUser } from "@shared/routes";
 import { useToast } from "@/hooks/use-toast";
 
 export function useUsers() {
@@ -23,8 +23,8 @@ export function useUsers() {
         body: JSON.stringify(data),
       });
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to create user");
+        const error = await res.json().catch(() => ({ message: res.statusText || "Failed to create user" }));
+        throw new Error(error.message);
       }
       return api.users.create.responses[201].parse(await res.json());
     },
@@ -44,10 +44,73 @@ export function useUsers() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async (data: UpdateUser) => {
+      const res = await fetch(buildUrl(api.users.update.path, { id: data.id }), {
+        method: api.users.update.method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ message: res.statusText || "Failed to update user" }));
+        throw new Error(error.message);
+      }
+      return api.users.update.responses[200].parse(await res.json());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.users.list.path] });
+      toast({
+        title: "Success",
+        description: "Utilisateur mis à jour avec succès",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      console.log(`Deleting user ${id}...`);
+      const res = await fetch(buildUrl(api.users.delete.path, { id }), {
+        method: api.users.delete.method,
+      });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ message: res.statusText || "Failed to delete user" }));
+        console.error("Delete user failed:", error);
+        throw new Error(error.message);
+      }
+      console.log("Delete user successful");
+      return;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.users.list.path] });
+      toast({
+        title: "Success",
+        description: "Utilisateur supprimé avec succès",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     users: query.data ?? [],
     isLoading: query.isLoading,
     createUser: createMutation.mutateAsync,
+    updateUser: updateMutation.mutateAsync,
+    deleteUser: deleteMutation.mutateAsync,
     isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
   };
 }

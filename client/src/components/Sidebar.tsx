@@ -1,12 +1,12 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { 
-  LayoutDashboard, 
-  Monitor, 
-  Users, 
-  Building2, 
-  LogOut, 
-  Settings 
+import {
+  LayoutDashboard,
+  Monitor,
+  Users,
+  Building2,
+  LogOut,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,29 +17,29 @@ export function Sidebar() {
   if (!user) return null;
 
   const links = [
-    { 
-      href: "/", 
-      label: "Dashboard", 
+    {
+      href: "/",
+      label: "Dashboard",
       icon: LayoutDashboard,
       roles: ["super_admin", "admin"]
     },
-    { 
-      href: "/pcs", 
-      label: "PCs Management", 
+    {
+      href: "/pcs",
+      label: "PCs Management",
       icon: Monitor,
-      roles: ["super_admin", "admin"] 
+      roles: ["super_admin", "admin"]
     },
-    { 
-      href: "/users", 
-      label: "Users", 
+    {
+      href: "/users",
+      label: "Users",
       icon: Users,
-      roles: ["super_admin"] 
+      roles: ["super_admin", "admin"]
     },
-    { 
-      href: "/establishments", 
-      label: "Establishments", 
+    {
+      href: "/establishments",
+      label: "Establishments",
       icon: Building2,
-      roles: ["super_admin"] 
+      roles: ["super_admin"]
     },
     {
       href: "/profile",
@@ -49,7 +49,7 @@ export function Sidebar() {
     }
   ];
 
-  const filteredLinks = links.filter(link => 
+  const filteredLinks = links.filter(link =>
     link.roles.includes(user.role)
   );
 
@@ -61,21 +61,21 @@ export function Sidebar() {
           IP Manager
         </span>
       </div>
-      
+
       <div className="flex-1 overflow-y-auto py-6 px-3">
         <nav className="space-y-1">
           {filteredLinks.map((link) => {
             const Icon = link.icon;
             const isActive = location === link.href;
-            
+
             return (
-              <Link 
-                key={link.href} 
+              <Link
+                key={link.href}
                 href={link.href}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200",
-                  isActive 
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" 
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 )}
               >

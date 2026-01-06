@@ -9,17 +9,20 @@ import { eq, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Users
+  getUsers(): Promise<User[]>;
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  getUsers(): Promise<User[]>;
   updateUser(id: number, user: Partial<User>): Promise<User>;
+  deleteUser(id: number): Promise<void>;
 
   // Establishments
   getEstablishments(): Promise<Establishment[]>;
   getEstablishment(id: number): Promise<Establishment | undefined>;
   createEstablishment(establishment: InsertEstablishment): Promise<Establishment>;
-
+  updateEstablishment(id:number, establishment: Partial<InsertEstablishment>): Promise<Establishment>;
+  deleteEstablishment(id: number): Promise<void>;
+  
   // PCs
   getPcs(establishmentId?: number): Promise<PC[]>;
   getPc(id: number): Promise<PC | undefined>;
@@ -58,6 +61,10 @@ export class DatabaseStorage implements IStorage {
     return user!;
   }
 
+  async deleteUser(id: number): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+
   async getEstablishments(): Promise<Establishment[]> {
     return await db.select().from(establishments);
   }
@@ -72,6 +79,17 @@ export class DatabaseStorage implements IStorage {
     const [newEst] = await db.select().from(establishments).where(eq(establishments.name, establishment.name));
     return newEst!;
   }
+
+  async deleteEstablishment(id: number): Promise<void>{
+    await db.delete(establishments).where(eq(establishments.id, id));
+  }
+
+  async updateEstablishment(id:number, establishment: Partial<InsertEstablishment>): Promise<Establishment>{
+    await db.update(establishments).set(establishment).where(eq(establishments.id, id));
+    const [updatedEst] = await db.select().from(establishments).where(eq(establishments.id, id));
+    return updatedEst!;
+  }
+
 
   async getPcs(establishmentId?: number): Promise<PC[]> {
     if (establishmentId) {

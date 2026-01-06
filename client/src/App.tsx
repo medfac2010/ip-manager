@@ -13,12 +13,12 @@ import Profile from "@/pages/Profile";
 import NotFound from "@/pages/not-found";
 import { useAuth } from "@/hooks/use-auth";
 
-function ProtectedRoute({ 
-  component: Component, 
-  allowedRoles 
-}: { 
-  component: React.ComponentType, 
-  allowedRoles?: string[] 
+function ProtectedRoute({
+  component: Component,
+  allowedRoles
+}: {
+  component: React.ComponentType,
+  allowedRoles?: string[]
 }) {
   const { user, isLoading } = useAuth();
 
@@ -43,39 +43,39 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
-      
+
       <Route path="/">
-        <ProtectedRoute 
-          component={Dashboard} 
-          allowedRoles={["super_admin", "admin"]} 
+        <ProtectedRoute
+          component={Dashboard}
+          allowedRoles={["super_admin", "admin"]}
         />
       </Route>
-      
+
       <Route path="/pcs">
-        <ProtectedRoute 
-          component={PCs} 
-          allowedRoles={["super_admin", "admin"]} 
+        <ProtectedRoute
+          component={PCs}
+          allowedRoles={["super_admin", "admin"]}
         />
       </Route>
-      
+
       <Route path="/users">
-        <ProtectedRoute 
-          component={Users} 
-          allowedRoles={["super_admin"]} 
+        <ProtectedRoute
+          component={Users}
+          allowedRoles={["super_admin", "admin"]}
         />
       </Route>
-      
+
       <Route path="/establishments">
-        <ProtectedRoute 
-          component={Establishments} 
-          allowedRoles={["super_admin"]} 
+        <ProtectedRoute
+          component={Establishments}
+          allowedRoles={["super_admin"]}
         />
       </Route>
-      
+
       <Route path="/profile">
-        <ProtectedRoute 
-          component={Profile} 
-          allowedRoles={["super_admin", "admin", "user"]} 
+        <ProtectedRoute
+          component={Profile}
+          allowedRoles={["super_admin", "admin", "user"]}
         />
       </Route>
 

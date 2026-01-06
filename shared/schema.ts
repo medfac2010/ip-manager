@@ -62,14 +62,18 @@ export const pcRelations = relations(pcs, ({ one }) => ({
 
 // Schemas
 export const insertEstablishmentSchema = createInsertSchema(establishments).omit({ id: true, createdAt: true });
+export const updateEstablishmentSchema = createInsertSchema(establishments).omit({ createdAt: true });
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
+export const updateUserSchema = createInsertSchema(users).omit({ createdAt: true });
 export const insertPcSchema = createInsertSchema(pcs).omit({ id: true, createdAt: true });
 
 // Types
 export type Establishment = typeof establishments.$inferSelect;
 export type InsertEstablishment = z.infer<typeof insertEstablishmentSchema>;
+export type UpdateEstablishment = z.infer<typeof updateEstablishmentSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpdateUser = z.infer<typeof updateUserSchema>;
 export type PC = typeof pcs.$inferSelect;
 export type InsertPC = z.infer<typeof insertPcSchema>;
 

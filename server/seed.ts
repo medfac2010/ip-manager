@@ -1,6 +1,6 @@
 import {db} from "./db.ts";
 import { establishments, users, pcs  } from "../shared/schema.ts";
-import "bcrypt";
+import bcrypt from "bcrypt";
 
 
 async function seed() {

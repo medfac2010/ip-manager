@@ -8,13 +8,13 @@ import { insertPcSchema, type InsertPC, type PC, pcTypes } from "@shared/routes"
 import { z } from "zod";
 import * as XLSX from "xlsx";
 
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
 import {
   Dialog,
@@ -47,7 +47,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function PCs() {
   const { user } = useAuth();
-  const { pcs, createPC, updatePC, deletePC, isLoading } = usePCs(
+  const { pcs, createPC, updatePC, deletePC, isLoading, isDeleting } = usePCs(
     user?.role === 'admin' ? user.establishmentId : undefined
   );
   const { establishments } = useEstablishments();
@@ -55,8 +55,8 @@ export default function PCs() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPC, setEditingPC] = useState<PC | null>(null);
 
-  const filteredPCs = pcs.filter(pc => 
-    pc.ipAddress.includes(searchTerm) || 
+  const filteredPCs = pcs.filter(pc =>
+    pc.ipAddress.includes(searchTerm) ||
     pc.officeName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     pc.usersInfo?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -69,8 +69,14 @@ export default function PCs() {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm("Are you sure you want to delete this PC?")) {
-      await deletePC(id);
+    if (window.confirm("Voulez-vous vraiment supprimer cet équipement ?")) {
+      console.log(`Bouton supprimer cliqué pour le PC ID: ${id}`);
+      try {
+        await deletePC(id);
+        console.log("Suppression réussie");
+      } catch (error) {
+        console.error("Erreur lors de la suppression:", error);
+      }
     }
   };
 
@@ -128,9 +134,9 @@ export default function PCs() {
                   <TableRow key={pc.id} className="hover:bg-secondary/30 transition-colors">
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {pc.type === "Server" ? <Server className="h-4 w-4 text-purple-500" /> : 
-                         pc.type === "Terminal" ? <Terminal className="h-4 w-4 text-orange-500" /> : 
-                         <Monitor className="h-4 w-4 text-blue-500" />}
+                        {pc.type === "Server" ? <Server className="h-4 w-4 text-purple-500" /> :
+                          pc.type === "Terminal" ? <Terminal className="h-4 w-4 text-orange-500" /> :
+                            <Monitor className="h-4 w-4 text-blue-500" />}
                         <span className="font-medium">{pc.type}</span>
                       </div>
                     </TableCell>
@@ -152,6 +158,7 @@ export default function PCs() {
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          disabled={isDeleting}
                           onClick={() => handleDelete(pc.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -170,9 +177,9 @@ export default function PCs() {
           <DialogHeader>
             <DialogTitle>{editingPC ? "Edit Device" : "Add New Device"}</DialogTitle>
           </DialogHeader>
-          <PCForm 
+          <PCForm
             establishmentId={user?.establishmentId}
-            establishments={establishments} 
+            establishments={establishments}
             initialData={editingPC}
             onSubmit={async (data) => {
               try {
@@ -193,16 +200,16 @@ export default function PCs() {
   );
 }
 
-function PCForm({ 
-  establishmentId, 
-  establishments, 
-  initialData, 
-  onSubmit 
-}: { 
+function PCForm({
+  establishmentId,
+  establishments,
+  initialData,
+  onSubmit
+}: {
   establishmentId?: number | null,
-  establishments: any[], 
-  initialData: PC | null, 
-  onSubmit: (data: InsertPC) => Promise<void> 
+  establishments: any[],
+  initialData: PC | null,
+  onSubmit: (data: InsertPC) => Promise<void>
 }) {
   const form = useForm<InsertPC>({
     resolver: zodResolver(insertPcSchema),
@@ -304,7 +311,7 @@ function PCForm({
               </FormItem>
             )}
           />
-           <FormField
+          <FormField
             control={form.control}
             name="officeName"
             render={({ field }) => (
@@ -352,7 +359,7 @@ function PCForm({
         <div className="space-y-3 border rounded-lg p-4 bg-muted/20">
           <h4 className="font-medium text-sm text-muted-foreground mb-2">Configuration & Licenses</h4>
           <div className="grid grid-cols-2 gap-4">
-             <FormField
+            <FormField
               control={form.control}
               name="hasWindows"
               render={({ field }) => (
@@ -380,7 +387,7 @@ function PCForm({
                 </FormItem>
               )}
             />
-             <FormField
+            <FormField
               control={form.control}
               name="hasOffice"
               render={({ field }) => (
@@ -408,7 +415,7 @@ function PCForm({
                 </FormItem>
               )}
             />
-             <FormField
+            <FormField
               control={form.control}
               name="isIpFiltered"
               render={({ field }) => (
@@ -422,7 +429,7 @@ function PCForm({
                 </FormItem>
               )}
             />
-             <FormField
+            <FormField
               control={form.control}
               name="hasAntivirus"
               render={({ field }) => (
